@@ -1,430 +1,161 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>はらぺこあおむしカーソル</title>
-  <style>
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      cursor: none;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.25), transparent 18%),
-        radial-gradient(circle at 80% 12%, rgba(255,255,255,0.18), transparent 16%),
-        linear-gradient(180deg, #edf9e7 0%, #d8efc7 55%, #bbdfa0 100%);
-      font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+<meta charset="UTF-8">
+<title>Magic Star Trail</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        cursor: none; /* デフォルトカーソル消す */
     }
-
-    #scene {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
+    canvas {
+        display: block;
     }
-
-    .hint {
-      position: absolute;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 16px;
-      background: rgba(255,255,255,0.8);
-      border-radius: 999px;
-      color: #35552f;
-      font-size: 14px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      z-index: 100;
-      pointer-events: none;
-      user-select: none;
-      white-space: nowrap;
-    }
-
-    .apple {
-      position: absolute;
-      width: 42px;
-      height: 42px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 40;
-      display: grid;
-      place-items: center;
-      font-size: 40px;
-      line-height: 1;
-      filter: drop-shadow(0 5px 8px rgba(0,0,0,0.14));
-      will-change: transform, left, top;
-    }
-
-    .sparkle {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.95);
-      pointer-events: none;
-      animation: sparkleFade 650ms ease-out forwards;
-      z-index: 20;
-    }
-
-    @keyframes sparkleFade {
-      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.4); }
-      100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
-    }
-
-    .caterpillar {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 30;
-    }
-
-    .segment {
-      position: absolute;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      box-shadow: inset -4px -4px 0 rgba(0,0,0,0.06), 0 3px 0 rgba(255,255,255,0.18);
-      will-change: transform, left, top;
-    }
-
-    .head {
-      background: #de5149;
-      border: 3px solid #b53d38;
-    }
-
-    .body-dark {
-      background: #38a64a;
-      border: 3px solid #2f8b3e;
-    }
-
-    .body-light {
-      background: #84d455;
-      border: 3px solid #68ad42;
-    }
-
-    .eye {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      background: #fff;
-      border-radius: 50%;
-      top: 10px;
-    }
-
-    .eye::after {
-      content: "";
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: #111;
-      left: 2px;
-      top: 2px;
-    }
-
-    .eye.left { left: 8px; }
-    .eye.right { right: 8px; }
-
-    .nose {
-      position: absolute;
-      width: 12px;
-      height: 8px;
-      border-bottom: 2px solid #462222;
-      border-radius: 0 0 10px 10px;
-      left: 50%;
-      bottom: 7px;
-      transform: translateX(-50%);
-    }
-
-    .antenna {
-      position: absolute;
-      width: 3px;
-      height: 14px;
-      background: #5f2722;
-      top: -10px;
-      transform-origin: bottom center;
-      border-radius: 3px;
-    }
-
-    .antenna::after {
-      content: "";
-      position: absolute;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #7c332d;
-      left: 50%;
-      top: -4px;
-      transform: translateX(-50%);
-    }
-
-    .antenna.left { left: 11px; transform: rotate(-25deg); }
-    .antenna.right { right: 11px; transform: rotate(25deg); }
-  </style>
+</style>
 </head>
 <body>
-  <div id="scene">
-    <div class="hint" id="hint">カーソルのりんごを、あおむしがゆっくり追いかけます</div>
-    <div id="apple" class="apple">🍎</div>
-    <div id="caterpillar" class="caterpillar"></div>
-    <div id="gameOver" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(255,255,255,0.38);backdrop-filter:blur(4px);z-index:120;pointer-events:none;">
-      <div style="padding:20px 28px;border-radius:24px;background:rgba(255,255,255,0.88);box-shadow:0 10px 30px rgba(0,0,0,0.12);text-align:center;">
-        <div style="font-size:42px;line-height:1;margin-bottom:8px;">🍎</div>
-        <div style="font-size:28px;color:#934343;font-weight:700;">ゲームオーバー</div>
-        <div style="margin-top:8px;color:#4d5e40;font-size:15px;">りんごはぜんぶ食べられてしまいました</div>
-      </div>
-    </div>
-  </div>
+<canvas id="canvas"></canvas>
 
-  <script>
-    (() => {
-      const scene = document.getElementById('scene');
-      const apple = document.getElementById('apple');
-      const caterpillar = document.getElementById('caterpillar');
-      const hint = document.getElementById('hint');
-      const gameOverPanel = document.getElementById('gameOver');
-      if (!scene || !apple || !caterpillar) return;
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-      const configs = [
-        { size: 40, className: 'head' },
-        { size: 34, className: 'body-dark' },
-        { size: 32, className: 'body-light' },
-        { size: 30, className: 'body-dark' },
-        { size: 28, className: 'body-light' },
-        { size: 26, className: 'body-dark' },
-        { size: 24, className: 'body-light' }
-      ];
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-      const segments = [];
-      const elements = [];
+let mouse = {
+    x: canvas.width / 2,
+    y: canvas.height / 2
+};
 
-      const mouse = {
-        x: window.innerWidth * 0.5,
-        y: window.innerHeight * 0.5
-      };
+window.addEventListener("mousemove", (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
 
-      let wiggle = 0;
-      let frame = 0;
-      let biteCooldown = 0;
-      let biteOpen = 0;
-      let biteFlash = 0;
-      let appleBiteSide = 1;
-      let appleHealth = 6;
-      let appleScale = 1;
-      let isGameOver = false;
+    // 粒発生
+    for (let i = 0; i < 8; i++) {
+        particles.push(new Particle(mouse.x, mouse.y));
+    }
+});
 
-      function clamp(v, min, max) {
-        return Math.max(min, Math.min(max, v));
-      }
+class Particle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
 
-      function angleLerp(a, b, t) {
-        let diff = b - a;
-        while (diff > Math.PI) diff -= Math.PI * 2;
-        while (diff < -Math.PI) diff += Math.PI * 2;
-        return a + diff * t;
-      }
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 3 + 1;
 
-      function createSegmentEl(cfg, index) {
-        const el = document.createElement('div');
-        el.className = `segment ${cfg.className}`;
-        el.style.width = `${cfg.size}px`;
-        el.style.height = `${cfg.size}px`;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
 
-        if (index === 0) {
-          const eyeL = document.createElement('div');
-          const eyeR = document.createElement('div');
-          const nose = document.createElement('div');
-          const antennaL = document.createElement('div');
-          const antennaR = document.createElement('div');
-          eyeL.className = 'eye left';
-          eyeR.className = 'eye right';
-          nose.className = 'nose';
-          antennaL.className = 'antenna left';
-          antennaR.className = 'antenna right';
-          el.append(eyeL, eyeR, nose, antennaL, antennaR);
-        }
+        this.life = 40 + Math.random() * 20;
 
-        caterpillar.appendChild(el);
-        return el;
-      }
-
-      function init() {
-        caterpillar.innerHTML = '';
-        segments.length = 0;
-        elements.length = 0;
-
-        const startX = window.innerWidth * 0.35;
-        const startY = window.innerHeight * 0.62;
-
-        configs.forEach((cfg, index) => {
-          const el = createSegmentEl(cfg, index);
-          elements.push(el);
-          segments.push({
-            x: startX - index * 26,
-            y: startY,
-            angle: 0,
-            size: cfg.size
-          });
-        });
-      }
-
-      function spawnSparkle(x, y) {
-        const s = document.createElement('div');
-        s.className = 'sparkle';
-        s.style.left = `${x + (Math.random() - 0.5) * 18}px`;
-        s.style.top = `${y + (Math.random() - 0.5) * 18}px`;
-        scene.appendChild(s);
-        setTimeout(() => s.remove(), 640);
-      }
-
-      function updateApple() {
-        apple.style.left = `${mouse.x}px`;
-        apple.style.top = `${mouse.y}px`;
-
-        const flashScale = biteFlash > 0.001 ? 1 + biteFlash * 0.18 : 1;
-        const biteRotation = appleBiteSide * biteFlash * 8;
-        const totalScale = appleScale * flashScale;
-        apple.style.transform = `translate(-50%, -50%) scale(${totalScale}) rotate(${biteRotation}deg)`;
-        apple.style.opacity = isGameOver ? '0' : '1';
-
-        if (biteOpen > 0.03 && !isGameOver) {
-          const notchX = appleBiteSide > 0 ? 82 : 18;
-          const depth = 18 + biteOpen * 20;
-          apple.style.clipPath = `polygon(
-            50% 0%,
-            74% 6%,
-            90% 20%,
-            98% 44%,
-            92% 72%,
-            78% 92%,
-            50% 100%,
-            22% 92%,
-            8% 72%,
-            2% 44%,
-            10% 20%,
-            26% 6%,
-            ${notchX}% ${30 - biteOpen * 12}%,
-            ${notchX - appleBiteSide * depth}% 50%,
-            ${notchX}% ${70 + biteOpen * 12}%
-          )`;
-          apple.style.filter = `drop-shadow(0 5px 8px rgba(0,0,0,0.14)) brightness(${1 + biteOpen * 0.12})`;
+        // 大粒ミックス
+        if (Math.random() < 0.2) {
+            this.size = Math.random() * 4 + 3;
         } else {
-          apple.style.clipPath = 'none';
-          apple.style.filter = 'drop-shadow(0 5px 8px rgba(0,0,0,0.14))';
-        }
-      }
-
-      function updateSegments() {
-        const head = segments[0];
-        const dx = mouse.x - head.x;
-        const dy = mouse.y - head.y;
-        const distance = Math.hypot(dx, dy);
-        const desiredAngle = Math.atan2(dy, dx);
-
-        head.angle = angleLerp(head.angle, desiredAngle, 0.08);
-
-        const speed = clamp(distance * 0.018, 0.4, 2.4);
-        if (!isGameOver) {
-          head.x += Math.cos(head.angle) * speed;
-          head.y += Math.sin(head.angle) * speed;
+            this.size = Math.random() * 2 + 1;
         }
 
-        wiggle += 0.08;
+        this.hue = Math.random() * 360;
+        this.alpha = 1;
+    }
 
-        for (let i = 1; i < segments.length; i++) {
-          const prev = segments[i - 1];
-          const cur = segments[i];
-          const gap = (prev.size + cur.size) * 0.42;
-          const swayAmount = Math.sin(wiggle - i * 0.8) * (i < 3 ? 3.5 : 5.5);
-          const targetX = prev.x - Math.cos(prev.angle) * gap - Math.sin(prev.angle) * swayAmount;
-          const targetY = prev.y - Math.sin(prev.angle) * gap + Math.cos(prev.angle) * swayAmount;
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
 
-          cur.x += (targetX - cur.x) * 0.22;
-          cur.y += (targetY - cur.y) * 0.22;
+        this.vx *= 0.95;
+        this.vy *= 0.95;
 
-          const aim = Math.atan2(prev.y - cur.y, prev.x - cur.x);
-          cur.angle = angleLerp(cur.angle, aim, 0.2);
+        this.life--;
+        this.alpha = this.life / 60;
+    }
+
+    draw() {
+        let gradient = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, this.size * 4
+        );
+
+        gradient.addColorStop(0, `hsla(${this.hue}, 100%, 70%, ${this.alpha})`);
+        gradient.addColorStop(0.4, `hsla(${this.hue}, 100%, 60%, ${this.alpha * 0.8})`);
+        gradient.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
+
+        ctx.beginPath();
+        ctx.fillStyle = gradient;
+        ctx.arc(this.x, this.y, this.size * 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 中心キラ
+        ctx.beginPath();
+        ctx.fillStyle = `hsla(${this.hue}, 100%, 80%, 1)`;
+        ctx.arc(this.x, this.y, this.size * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// ★ 星を描く関数
+function drawStar(x, y, spikes, outerRadius, innerRadius) {
+    let rot = Math.PI / 2 * 3;
+    let step = Math.PI / spikes;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y - outerRadius);
+
+    for (let i = 0; i < spikes; i++) {
+        ctx.lineTo(
+            x + Math.cos(rot) * outerRadius,
+            y + Math.sin(rot) * outerRadius
+        );
+        rot += step;
+
+        ctx.lineTo(
+            x + Math.cos(rot) * innerRadius,
+            y + Math.sin(rot) * innerRadius
+        );
+        rot += step;
+    }
+
+    ctx.lineTo(x, y - outerRadius);
+    ctx.closePath();
+    ctx.fill();
+}
+
+const particles = [];
+
+ctx.globalCompositeOperation = "lighter";
+
+function animate() {
+    // ★ 完全クリア（残像なし）
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // パーティクル
+    for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].draw();
+
+        if (particles[i].life <= 0) {
+            particles.splice(i, 1);
         }
+    }
 
-        if (!isGameOver && distance < 26 && biteCooldown <= 0) {
-          biteCooldown = 36;
-          biteOpen = 1;
-          biteFlash = 1;
-          appleBiteSide = Math.cos(head.angle) >= 0 ? -1 : 1;
-          appleHealth -= 1;
-          appleScale = Math.max(0, appleHealth / 6);
+    // ★ マウス先の星
+    ctx.fillStyle = "rgba(255, 255, 150, 0.9)";
+    drawStar(mouse.x, mouse.y, 5, 10, 5);
 
-          if (appleHealth <= 0) {
-            isGameOver = true;
-            gameOverPanel.style.display = 'flex';
-            if (hint) hint.textContent = 'りんごがなくなりました';
-          }
-        }
+    requestAnimationFrame(animate);
+}
 
-        if (biteCooldown > 0) biteCooldown -= 1;
-        biteOpen *= 0.84;
-        biteFlash *= 0.82;
-      }
+animate();
 
-      function drawSegments() {
-        for (let i = 0; i < segments.length; i++) {
-          const seg = segments[i];
-          const el = elements[i];
-          el.style.left = `${seg.x}px`;
-          el.style.top = `${seg.y}px`;
-
-          let scaleX = 1;
-          let scaleY = 1;
-          if (i === 0 && biteOpen > 0.05) {
-            scaleX = 1 + biteOpen * 0.08;
-            scaleY = 1 - biteOpen * 0.12;
-          }
-
-          el.style.transform = `translate(-50%, -50%) rotate(${seg.angle}rad) scale(${scaleX}, ${scaleY})`;
-        }
-      }
-
-      function animate() {
-        frame += 1;
-        updateApple();
-        updateSegments();
-        drawSegments();
-
-        if (!isGameOver && frame % 6 === 0) {
-          spawnSparkle(mouse.x, mouse.y);
-        }
-
-        requestAnimationFrame(animate);
-      }
-
-      function updatePointerPosition(e) {
-        if (typeof e.clientX === 'number' && typeof e.clientY === 'number') {
-          mouse.x = e.clientX;
-          mouse.y = e.clientY;
-        }
-      }
-
-      window.addEventListener('mousemove', updatePointerPosition, { passive: true });
-      window.addEventListener('pointermove', updatePointerPosition, { passive: true });
-      window.addEventListener('touchmove', (e) => {
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        mouse.x = t.clientX;
-        mouse.y = t.clientY;
-      }, { passive: true });
-
-      window.addEventListener('resize', () => {
-        mouse.x = clamp(mouse.x, 0, window.innerWidth);
-        mouse.y = clamp(mouse.y, 0, window.innerHeight);
-      });
-
-      init();
-      updateApple();
-      drawSegments();
-      requestAnimationFrame(animate);
-    })();
-  </script>
+window.addEventListener("resize", () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+</script>
 </body>
 </html>
